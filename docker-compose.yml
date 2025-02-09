@@ -1,0 +1,17 @@
+version: '3.9'
+
+services:
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: asselonay@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: sss
+    ports:
+      - "8888:80"
+    volumes:
+      - ./pgadmin_data:/var/lib/pgadmin
+
+volumes:
+  pgadmin_data:
+    driver: local
