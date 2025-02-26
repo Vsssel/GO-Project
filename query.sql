@@ -22,3 +22,7 @@ VALUES ($1, 1);
 UPDATE tasks
 SET status_id = $1
 WHERE id = $2;
+
+-- name: DeleteTask :exec
+
+DELETE FROM tasks WHERE id = $1;

@@ -1,17 +1,6 @@
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:latest
-    container_name: to_do_list_pq
-    environment:
-      POSTGRES_USER: assel
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: to_do_list
-    ports:
-      - "5432:5432"
-    networks:
-      - my_network
 
   pgadmin:
     image: dpage/pgadmin4
@@ -21,8 +10,6 @@ services:
       PGADMIN_DEFAULT_PASSWORD: sss
     ports:
       - "4444:80"
-    depends_on:
-      - postgres
     networks:
       - my_network
 
