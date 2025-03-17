@@ -11,12 +11,17 @@ import (
 
 const createTask = `-- name: CreateTask :exec
 
-INSERT INTO tasks (title, status_id)
-VALUES ($1, 1)
+INSERT INTO tasks (title, status_id, user_id)
+VALUES ($1, 1, $2)
 `
 
-func (q *Queries) CreateTask(ctx context.Context, title string) error {
-	_, err := q.db.ExecContext(ctx, createTask, title)
+type CreateTaskParams struct {
+	Title  string
+	UserID int32
+}
+
+func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) error {
+	_, err := q.db.ExecContext(ctx, createTask, arg.Title, arg.UserID)
 	return err
 }
 
@@ -30,71 +35,14 @@ func (q *Queries) DeleteTask(ctx context.Context, id int32) error {
 	return err
 }
 
-const getAllCompletedTasks = `-- name: GetAllCompletedTasks :many
-
-SELECT id, title, status_id FROM tasks 
-WHERE status_id = 2
-`
-
-func (q *Queries) GetAllCompletedTasks(ctx context.Context) ([]Task, error) {
-	rows, err := q.db.QueryContext(ctx, getAllCompletedTasks)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Task
-	for rows.Next() {
-		var i Task
-		if err := rows.Scan(&i.ID, &i.Title, &i.StatusID); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getAllCreatedTasks = `-- name: GetAllCreatedTasks :many
-
-SELECT id, title, status_id FROM tasks 
-WHERE status_id = 1
-`
-
-func (q *Queries) GetAllCreatedTasks(ctx context.Context) ([]Task, error) {
-	rows, err := q.db.QueryContext(ctx, getAllCreatedTasks)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Task
-	for rows.Next() {
-		var i Task
-		if err := rows.Scan(&i.ID, &i.Title, &i.StatusID); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getAllTasks = `-- name: GetAllTasks :many
 
-SELECT id, title, status_id FROM tasks
+SELECT id, title, status_id, user_id FROM tasks
+WHERE user_id = $1
 `
 
-func (q *Queries) GetAllTasks(ctx context.Context) ([]Task, error) {
-	rows, err := q.db.QueryContext(ctx, getAllTasks)
+func (q *Queries) GetAllTasks(ctx context.Context, userID int32) ([]Task, error) {
+	rows, err := q.db.QueryContext(ctx, getAllTasks, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +50,12 @@ func (q *Queries) GetAllTasks(ctx context.Context) ([]Task, error) {
 	var items []Task
 	for rows.Next() {
 		var i Task
-		if err := rows.Scan(&i.ID, &i.Title, &i.StatusID); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.StatusID,
+			&i.UserID,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -114,6 +67,41 @@ func (q *Queries) GetAllTasks(ctx context.Context) ([]Task, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const login = `-- name: Login :one
+
+SELECT id, username, email, password FROM users 
+WHERE email = $1
+`
+
+func (q *Queries) Login(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRowContext(ctx, login, email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.Email,
+		&i.Password,
+	)
+	return i, err
+}
+
+const signup = `-- name: Signup :exec
+
+INSERT INTO users (username, email, password)
+VALUES ($1, $2, $3)
+`
+
+type SignupParams struct {
+	Username string
+	Email    string
+	Password string
+}
+
+func (q *Queries) Signup(ctx context.Context, arg SignupParams) error {
+	_, err := q.db.ExecContext(ctx, signup, arg.Username, arg.Email, arg.Password)
+	return err
 }
 
 const updateTasksStatus = `-- name: UpdateTasksStatus :exec

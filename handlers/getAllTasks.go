@@ -8,13 +8,23 @@ import (
 )
 
 func (h *Handler) GetAllTasks(c *gin.Context) {
-	tasks, err := h.Queries.GetAllTasks(context.Background())
+    userID, exists := c.Get("user_id")
+    if !exists {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+        return
+    }
 
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
+    userIDInt, ok := userID.(int)
+    if !ok {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user ID"})
+        return
+    }
 
-	c.JSON(http.StatusOK, tasks)
+    tasks, err := h.Queries.GetAllTasks(context.Background(), int32(userIDInt))
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
 
+    c.JSON(http.StatusOK, tasks)
 }

@@ -13,4 +13,12 @@ type Task struct {
 	ID       int32
 	Title    string
 	StatusID int32
+	UserID   int32
+}
+
+type User struct {
+	ID       int32
+	Username string
+	Email    string
+	Password string
 }
