@@ -2,7 +2,9 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
+	"os"
 	"to-do-list-app/handlers"
 	"to-do-list-app/internal/repository"
 	"to-do-list-app/middleware"
@@ -29,10 +31,19 @@ func main() {
 }
 
 func ConnectDB() {
-	conn := "postgres://assel:password@localhost:4444/to-do-app?sslmode=disable"
-	dbconn, err := sql.Open("postgres", conn)
+	host := os.Getenv("DB_HOST")
+	port := os.Getenv("DB_PORT")
+	user := os.Getenv("DB_USER")
+	password := os.Getenv("DB_PASSWORD")
+	dbname := os.Getenv("DB_NAME")
 
-	// defer dbconn.Close()
+	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		host, port, user, password, dbname)
+
+	dbconn, err := sql.Open("postgres", psqlInfo)
+	if err != nil {
+		log.Fatal("Error connecting to DB:", err)
+	}
 
 	queries = repository.New(dbconn)
 

@@ -10,38 +10,37 @@ import (
 )
 
 func RequireAuth(c *gin.Context) {
-
 	tokenString, err := c.Cookie("Authorization")
-	
 	if err != nil {
-		c.AbortWithStatus(http.StatusUnauthorized)
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Missing or invalid token"})
+		return
 	}
 
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error){
-		
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
-
 		return []byte(os.Getenv("JWT_SECRET")), nil
 	})
 
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-
-		userID, exists := claims["sub"].(float64)
-
-		if !exists {
-			c.AbortWithStatus(http.StatusUnauthorized)
-			return
-		}
-
-		fmt.Println(claims["foo"], claims["nbf"])
-
-		c.Set("userID", userID)
-
-	} else {
-		c.AbortWithStatus(http.StatusUnauthorized)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		return
 	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
+		return
+	}
+
+	userID, exists := claims["sub"].(float64)
+	if !exists {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "User ID not found in token"})
+		return
+	}
+
+	c.Set("userID", int32(userID))
 
 	c.Next()
 }

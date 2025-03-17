@@ -33,7 +33,7 @@ func (h *Handler) Login (c *gin.Context) {
 		return
 	}
 
-	token, err := GenerateJWT(user.Email)
+	token, err := GenerateJWT(user.ID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Wrong password"})
 		return

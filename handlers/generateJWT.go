@@ -26,9 +26,9 @@ func init() {
 	}
 }
 
-func GenerateJWT(email string) (string, error) {
+func GenerateJWT(userID int32) (string, error) {
 	claims := jwt.MapClaims{
-		"email": email,
+		"sub": userID,
 		"exp":   time.Now().Add(time.Hour * 24).Unix(),
 	}
 

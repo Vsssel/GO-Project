@@ -1,17 +1,53 @@
-version: '3.8'
+version: "3.8"
 
 services:
+  postgres:
+    image: postgres:15
+    container_name: my_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: assel
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: to-do-app
+    ports:
+      - "5432:5432"
+    networks:
+      - mynetwork
+    volumes:
+      - pgdata:/var/lib/postgresql/data
 
   pgadmin:
     image: dpage/pgadmin4
-    container_name: to_do_list_pg_admin
+    container_name: my_pgadmin
+    restart: always
     environment:
       PGADMIN_DEFAULT_EMAIL: asselonay@gmail.com
-      PGADMIN_DEFAULT_PASSWORD: sss
+      PGADMIN_DEFAULT_PASSWORD: admin
     ports:
-      - "4444:80"
+      - "5050:80"
+    depends_on:
+      - postgres
     networks:
-      - my_network
+      - mynetwork
+
+  go-app:
+    build: .
+    container_name: my_go_app
+    restart: always
+    depends_on:
+      - postgres
+    environment:
+      DB_HOST: "postgres"
+      DB_PORT: "5432"
+      DB_USER: "assel"
+      DB_PASSWORD: "password"
+      DB_NAME: "to-do-app"
+    ports:
+      - "8080:8080"
+
 
 networks:
-  my_network:
+  mynetwork:
+
+volumes:
+  pgdata:
